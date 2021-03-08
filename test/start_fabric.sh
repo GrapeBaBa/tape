@@ -21,7 +21,7 @@ case $1 in
     CONFIG_FILE=/config/test/config14org1andorg2.yaml
     ;;
  2_2)
-#    curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash
+    curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash
     cd ./fabric-samples/test-network
     echo y |  ./network.sh down -i 2.2
     echo y |  ./network.sh up createChannel -i 2.2

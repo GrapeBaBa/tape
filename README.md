@@ -8,7 +8,6 @@ English/[中文](docs/whatis.md)
 Sometimes we need to test performance of a deployed Fabric network with ease. There are many excellent projects out there, i.e. Hyperledger Caliper. However, we sometimes just need a tiny, handy tool, like `tape`.
 
 ## What is it
-
 This is a very simple traffic generator:
 - it does not use any SDK
 - it does not attempt to deploy Fabric
@@ -31,7 +30,7 @@ Our main focus is to make sure that *tape will not be the bottleneck of performa
 
 You could get `tape` in three ways:
 1. Download binary: get release tar from [release page](https://github.com/guoger/tape/releases), and extract `tape` binary from it
-2. Build from source: clone this repo and run `go build ./cmd/tape` at root dir. Go1.11 or higher is required.
+2. Build from source: clone this repo and run `make tape` at root dir. Go1.14 or higher is required. `tape` binary will be available at project root directory.
 3. Pull docker image: `docker pull guoger/tape`
 
 ### Configure
@@ -60,6 +59,8 @@ sign_cert: ./organizations/peerOrganizations/org1.example.com/users/User1@org1.e
 num_of_conn: 10
 client_per_conn: 10
 ```
+<details>
+<summary>Click to expand details for configuration</summary>
 
 `endorsers`: include the addr and tls ca cert of peers. Peer address is in IP:Port format. You may need to add peer name, i.e. `peer0.org1.example.com,peer0.org2.example.com` to your `/etc/hosts`
 
@@ -94,6 +95,7 @@ crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/ms
 `num_of_conn`: number of gRPC connection established between client/peer, client/orderer. If you think client has not put enough pressure on Fabric, increase this.
 
 `client_per_conn`: number of clients per connection used to send proposals to peer. If you think client has not put enough pressure on Fabric, increase this.
+</details>
 
 ### Run
 
@@ -110,6 +112,10 @@ docker run -v $PWD:/tmp guoger/tape tape -c $CONFIG_FILE -n 40000
 *Set this to integer times of batchsize, so that last block is not cut due to timeout*. For example, if you have batch size of 500, set this to 500, 1000, 40000, 100000, etc.
 
 ## Tips
+
+- We use [logrus](https://github.com/sirupsen/logrus) for logging, which can be set with env var `export TAPE_LOGLEVEL=debug`.
+Here are possbile values (warn by default)
+`"panic", "fatal", "error", "warn", "warning", "info", "debug", "trace"`
 
 - Put this generator closer to Fabric, or even on the same machine. This is to prevent network bandwidth from being the bottleneck.
 
@@ -129,12 +135,13 @@ If you are reporting an issue, please generously turn on debug log with `export 
 
 Tape consists of several workers that run in goroutines, so that the pipeline is highly concurrent and scalable. Workers are connected via buffered channels, so they can pass products around.
 
-![tape workflow](tape.jpeg)
-
-### log
-
-We use [logrus](https://github.com/sirupsen/logrus) for logging, which can be set with env var `export TAPE_LOGLEVEL=debug`.
-Here are possbile values (warn by default)
-`"panic", "fatal", "error", "warn", "warning", "info", "debug", "trace"`
-
+![tape workflow](./docs/images/tape.jpeg)
 </details>
+
+## Maintainers
+
+| Name   | mail                     | github-ID               
+| ------ | ------------------------ | ----------- | 
+| Jay Gou | guojiannan1101@gmail.com | guoger      |
+| Sam Yuan   | yy19902439@126.com       | SamYuan1990 | 
+| Stone Cheng   | chengyang418@163.com     | stone-ch    | 

@@ -5,7 +5,6 @@
 *.so
 *.dylib
 ./tape
-tape
 
 # Test binary, build with `go test -c`
 *.test
@@ -15,11 +14,3 @@ tape
 
 # Files from IDE
 *.idea/
-
-bin/
-
-vendor/
-
-fabric-samples*/
-
-organizations/

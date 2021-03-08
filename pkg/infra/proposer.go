@@ -9,7 +9,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 type Proposers struct {
@@ -105,9 +104,9 @@ func CreateBroadcasters(conn int, orderer Node, logger *log.Logger) (Broadcaster
 }
 
 func (bs Broadcasters) Start(envs <-chan *Elements, errorCh chan error, done <-chan struct{}) {
-	for i, b := range bs {
+	for _, b := range bs {
 		go b.StartDraining(errorCh)
-		go b.Start(envs, errorCh, done, i)
+		go b.Start(envs, errorCh, done)
 	}
 }
 
@@ -117,9 +116,7 @@ type Broadcaster struct {
 }
 
 func CreateBroadcaster(node Node, logger *log.Logger) (*Broadcaster, error) {
-
 	client, err := CreateBroadcastClient(node, logger)
-
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +124,8 @@ func CreateBroadcaster(node Node, logger *log.Logger) (*Broadcaster, error) {
 	return &Broadcaster{c: client, logger: logger}, nil
 }
 
-func (b *Broadcaster) Start(envs <-chan *Elements, errorCh chan error, done <-chan struct{}, index int) {
-	b.logger.Debugf("Start sending broadcast:" + strconv.Itoa(index))
+func (b *Broadcaster) Start(envs <-chan *Elements, errorCh chan error, done <-chan struct{}) {
+	b.logger.Debugf("Start sending broadcast")
 	for {
 		select {
 		case e := <-envs:

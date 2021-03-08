@@ -57,7 +57,6 @@ func (a *Assembler) StartSigner(raw chan *Elements, signed []chan *Elements, err
 }
 
 func (a *Assembler) StartIntegrator(processed, envs chan *Elements, errorCh chan error, done <-chan struct{}) {
-
 	for {
 		select {
 		case p := <-processed:
@@ -67,7 +66,6 @@ func (a *Assembler) StartIntegrator(processed, envs chan *Elements, errorCh chan
 				return
 			}
 			envs <- e
-
 		case <-done:
 			return
 		}

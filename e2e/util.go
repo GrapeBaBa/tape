@@ -13,37 +13,14 @@ import (
 	"time"
 )
 
-type NodeSpec struct {
-	Addr    string
-	MtlsCrt string
-	MtlsKey string
-	Mtls    bool
-}
-
 type Values struct {
 	PrivSk          string
 	SignCert        string
 	MtlsCrt         string
 	MtlsKey         string
 	Mtls            bool
-	PeersAddrs      []string
-	OrdererAddr     string
-	PeersNodeSpecs  []NodeSpec
+	Addr            string
 	CommitThreshold int
-}
-
-func (va Values) Load() Values {
-	va.PeersNodeSpecs = make([]NodeSpec, 0)
-	for _, v := range va.PeersAddrs {
-		node := NodeSpec{
-			Addr:    v,
-			MtlsCrt: va.MtlsCrt,
-			MtlsKey: va.MtlsKey,
-			Mtls:    va.Mtls,
-		}
-		va.PeersNodeSpecs = append(va.PeersNodeSpecs, node)
-	}
-	return va
 }
 
 func GenerateCertAndKeys(key, cert *os.File) error {
@@ -78,30 +55,21 @@ func GenerateCertAndKeys(key, cert *os.File) error {
 }
 
 func GenerateConfigFile(fileName string, values Values) {
-	// {{range $k, $v := .Var}} {{$k}} => {{$v}} {{end}}
-	values = values.Load()
 	var Text = `# Definition of nodes
-{{range $k, $v := .PeersNodeSpecs}}
-node: &node{{$k}}
-  addr: {{ .Addr }}{{ if .Mtls }}
+node: &node
+  addr: {{ .Addr }}
+  {{ if .Mtls }}
   tls_ca_cert: {{.MtlsCrt}}
   tls_ca_key: {{.MtlsKey}}
   tls_ca_root: {{.MtlsCrt}}
-{{ end }}
-{{ end }}
-orderer1: &orderer1
-  addr: {{ .OrdererAddr }}{{ if .Mtls }}
-  tls_ca_cert: {{.MtlsCrt}}
-  tls_ca_key: {{.MtlsKey}}
-  tls_ca_root: {{.MtlsCrt}}
-{{ end }}
+  {{ end }}
 # Nodes to interact with
-endorsers:{{range $k, $v := .PeersNodeSpecs}}
-  - *node{{$k}}{{end}}
-committers: {{range $k, $v := .PeersNodeSpecs}}
-  - *node{{$k}}{{end}}
+endorsers:
+  - *node
+committers: 
+  - *node
 commitThreshold: {{ .CommitThreshold }}
-orderer: *orderer1
+orderer: *node
 channel: test-channel
 chaincode: test-chaincode
 mspid: Org1MSP

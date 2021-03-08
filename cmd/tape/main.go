@@ -20,6 +20,7 @@ var (
 
 	run     = app.Command("run", "Start the tape program").Default()
 	con     = run.Flag("config", "Path to config file").Required().Short('c').String()
+	phases  = run.Flag("phase", "the phases to test").Required().Short('p').String()
 	num     = run.Flag("number", "Number of tx for shot").Required().Short('n').Int()
 	rate    = run.Flag("rate", "[Optional] Creates tx rate, default 0 as unlimited").Default("0").Float64()
 	burst   = run.Flag("burst", "[Optional] Burst size for Tape, should bigger than rate").Default("1000").Int()
@@ -30,10 +31,11 @@ func main() {
 	var err error
 
 	logger := log.New()
-	logger.SetLevel(log.WarnLevel)
+	logger.SetLevel(log.InfoLevel)
 	if customerLevel, customerSet := os.LookupEnv(loglevel); customerSet {
 		if lvl, err := log.ParseLevel(customerLevel); err == nil {
 			logger.SetLevel(lvl)
+			logger.Warnln("set new log level")
 		}
 	}
 
@@ -43,7 +45,7 @@ func main() {
 		fmt.Printf(infra.GetVersionInfo())
 	case run.FullCommand():
 		checkArgs(rate, burst, logger)
-		err = infra.Process(*con, *num, *burst, *rate, logger)
+		err = infra.Process(*con, *phases, *num, *burst, *rate,logger)
 	default:
 		err = errors.Errorf("invalid command: %s", fullCmd)
 	}

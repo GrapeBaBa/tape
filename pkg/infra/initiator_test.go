@@ -42,8 +42,7 @@ var _ = Describe("Initiator", func() {
 			PrivSk:          mtlsKeyFile.Name(),
 			SignCert:        mtlsCertFile.Name(),
 			Mtls:            false,
-			PeersAddrs:      []string{"dummy"},
-			OrdererAddr:     "dummy",
+			Addr:            "dummy",
 			CommitThreshold: 1,
 		}
 		e2e.GenerateConfigFile(configFile.Name(), configValue)

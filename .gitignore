@@ -4,8 +4,8 @@
 *.dll
 *.so
 *.dylib
-#./tape
-#tape
+./tape
+tape
 
 # Test binary, build with `go test -c`
 *.test
@@ -22,4 +22,4 @@ vendor/
 
 #fabric-samples*/
 
-#organizations/
+organizations/

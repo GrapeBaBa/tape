@@ -16,7 +16,7 @@ tape
 # Files from IDE
 *.idea/
 
-bin/
+#bin/
 
 vendor/
 

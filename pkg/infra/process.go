@@ -15,7 +15,8 @@ import (
 var Cores = 4
 
 func Process(configPath string, phases string, num int, burst int, rate float64, logger *log.Logger) error {
-	switch phases {
+	fmt.Printf("burst is %d, rate is %f \n", burst, rate)
+        switch phases {
 	case "endorserOnly":
 		return EndorserOnly(configPath, num, logger)
 	case "mockOrdererOnly":

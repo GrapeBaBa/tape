@@ -36,6 +36,22 @@ case $1 in
 
     echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go "${ARGS[@]}"
     ;;
+ 2_2_2)
+    #curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash
+    cd ./fabric-samples/test-network
+    echo y |  ./network.sh down -i 2.2.2
+    echo y |  ./network.sh up createChannel -i 2.2.2
+    cp -r organizations "$DIR"
+
+    CONFIG_FILE=/config/test/config20org1andorg2.yaml
+
+    if [ $2 == "ORLogic" ]; then
+      CONFIG_FILE=/config/test/config20selectendorser.yaml
+      ARGS=(-ccep "OR('Org1.member','Org2.member')")
+    fi
+
+    echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go "${ARGS[@]}"
+    ;;
  latest)
     curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash
     cd ./fabric-samples/test-network
@@ -71,4 +87,4 @@ cd "$DIR"
 
 #docker kill peer0.org1.example.com
 
-docker run  -e TAPE_LOGLEVEL=info --network host -v $PWD:/config tape tape -c $CONFIG_FILE -n 40000 -p all
+docker run  -e TAPE_LOGLEVEL=info --network host -v $PWD:/config tape tape -c $CONFIG_FILE -n 400000 -p all

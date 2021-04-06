@@ -2,8 +2,8 @@
 set -ex
 
 DIR=$PWD
-docker image rm -f tape
-docker build -t tape:latest .
+#docker image rm -f tape
+#docker build -t tape:latest .
 
 case $1 in
  1_4)

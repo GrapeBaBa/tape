@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 
-DIR=$PWD
+#DIR=$PWD
 #docker image rm -f tape
 #docker build -t tape:latest .
 
@@ -21,11 +21,11 @@ case $1 in
     CONFIG_FILE=/config/test/config14org1andorg2.yaml
     ;;
  2_2)
-#    curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash
-    cd ./fabric-samples/test-network
-#    echo y |  ./network.sh down -i 2.2
-#    echo y |  ./network.sh up createChannel -i 2.2
-#    cp -r organizations "$DIR"
+    #curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash
+    #cd ./fabric-samples/test-network
+    #echo y |  ./network.sh down -i 2.2
+    #echo y |  ./network.sh up createChannel -i 2.2
+    #cp -r organizations "$DIR"
 
     CONFIG_FILE=/config/test/config20org1andorg2.yaml
 
@@ -34,14 +34,30 @@ case $1 in
       ARGS=(-ccep "OR('Org1.member','Org2.member')")
     fi
 
-#    echo y |  ./network.sh deployCC "${ARGS[@]}"
+    #echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go "${ARGS[@]}"
+    ;;
+ 2_2_2)
+    #curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/release-2.2/scripts/bootstrap.sh | bash
+    cd ./fabric-samples/test-network
+    echo y |  ./network.sh down -i 2.2.2
+    echo y |  ./network.sh up createChannel -i 2.2.2
+    cp -r organizations "$DIR"
+
+    CONFIG_FILE=/config/test/config20org1andorg2.yaml
+
+    if [ $2 == "ORLogic" ]; then
+      CONFIG_FILE=/config/test/config20selectendorser.yaml
+      ARGS=(-ccep "OR('Org1.member','Org2.member')")
+    fi
+
+    echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go "${ARGS[@]}"
     ;;
  latest)
     curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash
     cd ./fabric-samples/test-network
-#    echo y |  ./network.sh down
-#    echo y |  ./network.sh up createChannel
-#    cp -r organizations "$DIR"
+    echo y |  ./network.sh down
+    echo y |  ./network.sh up createChannel
+    cp -r organizations "$DIR"
 
     CONFIG_FILE=/config/test/config20org1andorg2.yaml
 
@@ -50,15 +66,25 @@ case $1 in
       ARGS=(-ccep "OR('Org1.member','Org2.member')")
     fi
 
-#    echo y |  ./network.sh deployCC "${ARGS[@]}"
+    echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go "${ARGS[@]}"
     ;;
  *)
     echo "Usage: $1 [1_4|2_2|latest]"
     echo "When given version, start byfn or test network basing on specific version of docker image"
     echo "For any value without mock, 1_4, 2_2, latest will show this hint"
-    exit 0
+    CONFIG_FILE=/config/test/config20org1andorg2.yaml
+
+    if [ $2 == "ORLogic" ]; then
+      CONFIG_FILE=/config/test/config20selectendorser.yaml
+      ARGS=(-ccep "OR('Org1.member','Org2.member')")
+    fi
     ;;
 esac
 
 cd "$DIR"
-docker run  -e TAPE_LOGLEVEL=info --network host -v $PWD:/config tape tape -c $CONFIG_FILE -n 800000 -p mockOrdererOnly
+
+#docker kill peer0.org2.example.com
+
+#docker kill peer0.org1.example.com
+
+docker run  -e TAPE_LOGLEVEL=info --network host -v $PWD:/config tape tape -c $CONFIG_FILE -n 400000 -p all

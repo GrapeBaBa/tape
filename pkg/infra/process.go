@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"runtime"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
@@ -12,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var Cores = 4
+var Cores = runtime.NumCPU()
 
 func Process(configPath string, phases string, num int, burst int, rate float64, logger *log.Logger) error {
 	fmt.Printf("burst is %d, rate is %f \n", burst, rate)
@@ -297,11 +298,13 @@ func OrdererOnly(configPath string, num int, logger *log.Logger) error {
 		if err != nil {
 			fmt.Printf( "error creating proposal %s", err)
 			errorCh <- errors.Wrapf(err, "error creating proposal")
+			return err
 		}
 		signedProposal, err := assember.sign(&Elements{Proposal: prop})
 		if err != nil {
 			fmt.Printf( "error creating signedProposal %s", err)
 			errorCh <- errors.Wrapf(err, "error creating signedProposal")
+			return err
 		}
 
 		for _, v := range signed {
@@ -335,7 +338,7 @@ func OrdererOnly(configPath string, num int, logger *log.Logger) error {
 		return err
 	}
 
-	for i := 20; i > 0; i-- {
+	for i := 10; i > 0; i-- {
 		logger.Infof("test will begin in %ds \n", i)
 		time.Sleep(1 * time.Second)
 	}

@@ -295,9 +295,14 @@ func OrdererOnly(configPath string, num int, logger *log.Logger) error {
 			config.Args...,
 		)
 		if err != nil {
+			fmt.Printf( "error creating proposal %s", err)
 			errorCh <- errors.Wrapf(err, "error creating proposal")
 		}
 		signedProposal, err := assember.sign(&Elements{Proposal: prop})
+		if err != nil {
+			fmt.Printf( "error creating signedProposal %s", err)
+			errorCh <- errors.Wrapf(err, "error creating signedProposal")
+		}
 
 		for _, v := range signed {
 			v <- signedProposal

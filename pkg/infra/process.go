@@ -3,8 +3,8 @@ package infra
 import (
 	"fmt"
 	"os"
-	"time"
 	"runtime"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
@@ -17,7 +17,7 @@ var Cores = runtime.NumCPU()
 
 func Process(configPath string, phases string, num int, burst int, rate float64, logger *log.Logger) error {
 	fmt.Printf("burst is %d, rate is %f \n", burst, rate)
-        switch phases {
+	switch phases {
 	case "endorserOnly":
 		return EndorserOnly(configPath, num, logger)
 	case "mockOrdererOnly":
@@ -80,7 +80,7 @@ func AllPhases(configPath string, num int, burst int, rate float64, logger *log.
 	if err != nil {
 		return err
 	}
-	broadcasters.Start(envs, errorCh, done)
+	broadcasters.Start(envs, config.ClientPerConn, errorCh, done)
 
 	observers, err := CreateObservers(config.Channel, config.Committers, crypto, logger)
 	if err != nil {
@@ -249,7 +249,7 @@ func MockOrdererOnly(configPath string, num int, logger *log.Logger) error {
 
 	start := time.Now()
 	go ordererObserver.Start(num, errorCh, finishCh, start)
-	broadcasters.Start(envs, errorCh, done)
+	broadcasters.Start(envs, config.ClientPerConn, errorCh, done)
 
 	for {
 		select {
@@ -296,13 +296,13 @@ func OrdererOnly(configPath string, num int, logger *log.Logger) error {
 			config.Args...,
 		)
 		if err != nil {
-			fmt.Printf( "error creating proposal %s", err)
+			fmt.Printf("error creating proposal %s", err)
 			errorCh <- errors.Wrapf(err, "error creating proposal")
 			return err
 		}
 		signedProposal, err := assember.sign(&Elements{Proposal: prop})
 		if err != nil {
-			fmt.Printf( "error creating signedProposal %s", err)
+			fmt.Printf("error creating signedProposal %s", err)
 			errorCh <- errors.Wrapf(err, "error creating signedProposal")
 			return err
 		}
@@ -346,7 +346,7 @@ func OrdererOnly(configPath string, num int, logger *log.Logger) error {
 	start := time.Now()
 
 	go ordererObserver.Start(num, errorCh, finishCh, start)
-	broadcasters.Start(envs, errorCh, done)
+	broadcasters.Start(envs, config.ClientPerConn, errorCh, done)
 
 	for {
 		select {
@@ -438,7 +438,7 @@ func OrdererAndCommitter(configPath string, num int, logger *log.Logger) error {
 	blockCollector, err := NewBlockCollector(config.CommitThreshold, len(config.Committers))
 
 	start := time.Now()
-	broadcasters.Start(envs, errorCh, done)
+	broadcasters.Start(envs, config.ClientPerConn, errorCh, done)
 
 	go observer.Start(num, errorCh, finishCh, start, blockCollector)
 	for {

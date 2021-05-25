@@ -104,10 +104,12 @@ func CreateBroadcasters(conn int, orderer Node, logger *log.Logger) (Broadcaster
 	return bs, nil
 }
 
-func (bs Broadcasters) Start(envs <-chan *Elements, errorCh chan error, done <-chan struct{}) {
+func (bs Broadcasters) Start(envs <-chan *Elements, clientPerConn int, errorCh chan error, done <-chan struct{}) {
 	for i, b := range bs {
 		go b.StartDraining(errorCh)
-		go b.Start(envs, errorCh, done, i)
+		for k := 0; k < clientPerConn; k++ {
+			go b.Start(envs, errorCh, done, i)
+		}
 	}
 }
 

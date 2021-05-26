@@ -3,6 +3,7 @@ package infra
 import (
 	"context"
 	"io"
+	"sync"
 
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/orderer"
@@ -116,6 +117,7 @@ func (bs Broadcasters) Start(envs <-chan *Elements, clientPerConn int, errorCh c
 type Broadcaster struct {
 	c      orderer.AtomicBroadcast_BroadcastClient
 	logger *log.Logger
+	mutex  sync.Mutex
 }
 
 func CreateBroadcaster(node Node, logger *log.Logger) (*Broadcaster, error) {
@@ -134,7 +136,9 @@ func (b *Broadcaster) Start(envs <-chan *Elements, errorCh chan error, done <-ch
 	for {
 		select {
 		case e := <-envs:
+			b.mutex.Lock()
 			err := b.c.Send(e.Envelope)
+			b.mutex.Unlock()
 			if err != nil {
 				errorCh <- err
 			}

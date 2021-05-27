@@ -114,6 +114,16 @@ func (bs Broadcasters) Start(envs <-chan *Elements, clientPerConn int, errorCh c
 	}
 }
 
+func (bs Broadcasters) Start1(envss []chan *Elements, clientPerConn int, errorCh chan error, done <-chan struct{}, do <-chan struct{}, wg *sync.WaitGroup) {
+	for i, b := range bs {
+		go b.StartDraining(errorCh)
+		for k := 0; k < clientPerConn; k++ {
+			go b.Start1(envss[i], errorCh, done, do, i)
+			wg.Done()
+		}
+	}
+}
+
 type Broadcaster struct {
 	c      orderer.AtomicBroadcast_BroadcastClient
 	logger *log.Logger
@@ -136,6 +146,25 @@ func (b *Broadcaster) Start(envs <-chan *Elements, errorCh chan error, done <-ch
 	for {
 		select {
 		case e := <-envs:
+			b.mutex.Lock()
+			err := b.c.Send(e.Envelope)
+			b.mutex.Unlock()
+			if err != nil {
+				errorCh <- err
+			}
+
+		case <-done:
+			return
+		}
+	}
+}
+
+func (b *Broadcaster) Start1(envs <-chan *Elements, errorCh chan error, done <-chan struct{}, do <-chan struct{}, index int) {
+	b.logger.Debugf("Start sending broadcast:" + strconv.Itoa(index))
+	for {
+		select {
+		case e := <-envs:
+			<-do
 			b.mutex.Lock()
 			err := b.c.Send(e.Envelope)
 			b.mutex.Unlock()

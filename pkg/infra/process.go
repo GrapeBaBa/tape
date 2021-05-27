@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"sync"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -189,17 +188,10 @@ func MockOrdererOnly(configPath string, num int, logger *log.Logger) error {
 	if err != nil {
 		return err
 	}
-
-	envss := make([]chan *Elements, config.NumOfConn)
-	for i := 0; i < config.NumOfConn; i++ {
-		envs := make(chan *Elements, num/config.NumOfConn)
-		envss[i] = envs
-	}
-	//envs := make(chan *Elements, num)
+	envs := make(chan *Elements, num)
 	done := make(chan struct{})
 	finishCh := make(chan struct{})
 	errorCh := make(chan error, num)
-	do := make(chan struct{})
 
 	broadcasters, err := CreateBroadcasters(config.NumOfConn, config.Orderer, logger)
 	if err != nil {
@@ -211,44 +203,42 @@ func MockOrdererOnly(configPath string, num int, logger *log.Logger) error {
 		return err
 	}
 
-	for i := 0; i < num; i = i + config.NumOfConn {
-		for j := 0; j < config.NumOfConn; j++ {
-			nonce := []byte("nonce-abc-12345")
-			creator, _ := crypto.Serialize()
-			txid := protoutil.ComputeTxID(nonce, creator)
+	for i := 0; i < num; i++ {
+		nonce := []byte("nonce-abc-12345")
+		creator, _ := crypto.Serialize()
+		txid := protoutil.ComputeTxID(nonce, creator)
 
-			txType := common.HeaderType_ENDORSER_TRANSACTION
-			chdr := &common.ChannelHeader{
-				Type:      int32(txType),
-				ChannelId: config.Channel,
-				TxId:      txid,
-				Epoch:     uint64(0),
-			}
-
-			shdr := &common.SignatureHeader{
-				Creator: creator,
-				Nonce:   nonce,
-			}
-
-			payload := &common.Payload{
-				Header: &common.Header{
-					ChannelHeader:   protoutil.MarshalOrPanic(chdr),
-					SignatureHeader: protoutil.MarshalOrPanic(shdr),
-				},
-				Data: []byte("data"),
-			}
-
-			payloadBytes, _ := protoutil.GetBytesPayload(payload)
-
-			signature, _ := crypto.Sign(payloadBytes)
-
-			envelope := &common.Envelope{
-				Payload:   payloadBytes,
-				Signature: signature,
-			}
-
-			envss[j] <- &Elements{Envelope: envelope}
+		txType := common.HeaderType_ENDORSER_TRANSACTION
+		chdr := &common.ChannelHeader{
+			Type:      int32(txType),
+			ChannelId: config.Channel,
+			TxId:      txid,
+			Epoch:     uint64(0),
 		}
+
+		shdr := &common.SignatureHeader{
+			Creator: creator,
+			Nonce:   nonce,
+		}
+
+		payload := &common.Payload{
+			Header: &common.Header{
+				ChannelHeader:   protoutil.MarshalOrPanic(chdr),
+				SignatureHeader: protoutil.MarshalOrPanic(shdr),
+			},
+			Data: []byte("data"),
+		}
+
+		payloadBytes, _ := protoutil.GetBytesPayload(payload)
+
+		signature, _ := crypto.Sign(payloadBytes)
+
+		envelope := &common.Envelope{
+			Payload:   payloadBytes,
+			Signature: signature,
+		}
+
+		envs <- &Elements{Envelope: envelope}
 
 	}
 
@@ -257,15 +247,10 @@ func MockOrdererOnly(configPath string, num int, logger *log.Logger) error {
 		time.Sleep(1 * time.Second)
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(config.NumOfConn * config.ClientPerConn)
-	broadcasters.Start1(envss, config.ClientPerConn, errorCh, done, do, &wg)
-
-	wg.Wait()
 	start := time.Now()
 	go ordererObserver.Start(num, errorCh, finishCh, start)
-	time.Sleep(500 * time.Millisecond)
-	close(do)
+	broadcasters.Start(envs, config.ClientPerConn, errorCh, done)
+
 	for {
 		select {
 		case err = <-errorCh:
